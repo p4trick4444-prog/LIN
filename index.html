@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>朕天下 塞林老師專屬</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{
+    margin:0;
+    padding:20px 20px 120px;
+    font-family:"Microsoft JhengHei",Arial;
+    background:#000;
+    color:#fff;
+    overflow:hidden;
+    display:flex;
+    justify-content:center;
+}
+#bgCanvas{
+    position:fixed;
+    inset:0;
+    z-index:-2;
+}
+.container{
+    max-width:1100px;
+    width:100%;
+    text-align:center;
+}
+h1{
+    font-size:34px;
+    margin-bottom:18px;
+    color:#ffd700;
+}
+button{
+    width:220px;
+    padding:14px;
+    margin:6px;
+    font-weight:bold;
+    border:none;
+    border-radius:16px;
+    cursor:pointer;
+    background:#ffd700;
+    color:#000;
+    font-size:16px;
+}
+
+/* ===== LOGO ===== */
+.logo{
+    position:fixed;
+    top:20px;
+    z-index:999;
+}
+#logoLeft{
+    left:20px;
+    width:400px;   /* ← 左上再大一點 */
+}
+#logoRight{
+    right:20px;
+    width:240px;   /* ← 右上角明顯放大 */
+}
+
+#loadingText{
+    display:none;
+    margin-top:10px;
+    font-weight:bold;
+    color:#ffd700;
+}
+
+.progress{
+    width:80%;
+    height:16px;
+    margin:8px auto;
+    background:rgba(255,255,255,.25);
+    border-radius:12px;
+    overflow:hidden;
+    display:none;
+}
+.progress div{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg,#ffd700,#ff9800);
+}
+
+#dataPanel{
+    display:none;
+    width:90%;
+    max-width:760px;
+    margin:12px auto;
+    padding:16px;
+    background:rgba(0,0,0,.75);
+    font-family:Consolas;
+    font-size:13px;
+    text-align:left;
+}
+
+.slot-container{
+    display:none;
+    grid-template-columns:repeat(3,1fr);
+    gap:22px;
+    margin-top:30px;
+}
+.slot{
+    padding:24px;
+    border-radius:18px;
+    background:rgba(0,0,0,.85);
+    display:flex;
+    justify-content:space-between;
+    opacity:0;
+    transform:translateY(15px);
+    transition:.4s;
+}
+.slot.show{opacity:1;transform:none;}
+
+@keyframes jump{
+    0%,100%{transform:scale(1);}
+    50%{transform:scale(1.15);}
+}
+</style>
+</head>
+
+<body>
+<canvas id="bgCanvas"></canvas>
+
+<img src="logo.png" class="logo" id="logoLeft">
+<img src="logo2.png" class="logo" id="logoRight">
+
+<div class="container">
+<h1 id="title"></h1>
+
+<button onclick="refresh()">三十分鐘更新</button>
+<button onclick="toggleVer()">切換 I / II</button>
+
+<div id="loadingText">備課中</div>
+<div class="progress" id="progress"><div></div></div>
+<div id="dataPanel"></div>
+
+<div id="slots" class="slot-container"></div>
+</div>
+
+<script>
+/* ===== 背景掉落 ===== */
+const canvas=document.getElementById("bgCanvas");
+const ctx=canvas.getContext("2d");
+let items=[],version="II";
+
+function resize(){
+    canvas.width=innerWidth;
+    canvas.height=innerHeight;
+}
+resize();onresize=resize;
+
+function renderEmoji(e){
+    let c=document.createElement("canvas");
+    c.width=c.height=80;
+    let x=c.getContext("2d");
+    x.font="64px 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji'";
+    x.textAlign="center";
+    x.textBaseline="middle";
+    x.fillText(e,40,40);
+    return c;
+}
+const coin=renderEmoji("🪙");
+const bill=renderEmoji("💵");
+
+function spawn(){
+    items.push({
+        x:Math.random()*canvas.width,
+        y:-50,
+        v:6+Math.random()*4,
+        img:version==="I"?coin:bill
+    });
+}
+
+function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    items.forEach(i=>{
+        ctx.drawImage(i.img,i.x,i.y,40,40);
+        i.y+=i.v;
+    });
+    items=items.filter(i=>i.y<canvas.height+50);
+    if(Math.random()>0.45)spawn();
+    requestAnimationFrame(draw);
+}
+draw();
+
+/* ===== 主邏輯 ===== */
+const title=document.getElementById("title");
+const slots=document.getElementById("slots");
+const data=document.getElementById("dataPanel");
+const bar=document.querySelector("#progress div");
+const loadingText=document.getElementById("loadingText");
+let usedRooms=new Set();
+
+function applyTitle(){
+    title.textContent=`朕天下 塞林老師專屬｜賽特 ${version} 爆分機率選房`;
+}
+applyTitle();
+
+async function fakeLoad(){
+    loadingText.style.display="block";
+    loadingText.textContent="備課中";
+    document.getElementById("progress").style.display="block";
+    data.style.display="block";
+    data.innerHTML="";
+    bar.style.width="0%";
+
+    const lines=[
+        "∑(xᵢ²−μ)/σ → ∞",
+        "limₙ→∞ P(burstₙ)",
+        "∫Awakening·Chaos dx",
+        "ΣRandomWeight ≠ 0",
+        "f(room)=爆分極值"
+    ];
+
+    let p=0;
+    for(const l of lines){
+        let d=document.createElement("div");
+        data.appendChild(d);
+        await new Promise(r=>{
+            (function step(){
+                p+=Math.random()*6;
+                if(p>100)p=100;
+                d.textContent=l;
+                bar.style.width=p+"%";
+                p<100?requestAnimationFrame(step):setTimeout(r,180);
+            })();
+        });
+    }
+    loadingText.textContent="林老師上課囉";
+}
+
+function genRoom(){
+    let r;
+    do{r=Math.floor(Math.random()*3000);}while(usedRooms.has(r));
+    usedRooms.add(r);
+    return r;
+}
+
+async function refresh(){
+    slots.style.display="none";
+    slots.innerHTML="";
+    await fakeLoad();
+
+    setTimeout(()=>{
+        loadingText.style.display="none";
+        data.style.display="none";
+        document.getElementById("progress").style.display="none";
+    },800);
+
+    slots.style.display="grid";
+
+    let rooms=[];
+    for(let i=0;i<3;i++)rooms.push("top");
+    for(let i=0;i<6;i++)rooms.push("high");
+    while(rooms.length<27)rooms.push("normal");
+    rooms.sort(()=>Math.random()-0.5);
+
+    rooms.forEach((t,i)=>{
+        let s=document.createElement("div");
+        s.className="slot";
+        if(t==="top"){
+            s.style.border="4px solid red";
+            s.style.boxShadow="0 0 45px red,0 0 90px red";
+            s.style.animation="jump 1.2s infinite";
+        }else if(t==="high"){
+            s.style.border="4px solid gold";
+            s.style.boxShadow="0 0 35px gold,0 0 70px gold";
+            s.style.animation="jump 1.4s infinite";
+        }else{
+            s.style.border="2px solid #666";
+            s.style.boxShadow="0 0 10px #444";
+        }
+        s.innerHTML=`<span>第 ${genRoom()} 房</span><span>${50+Math.random()*40|0}%</span>`;
+        slots.appendChild(s);
+        setTimeout(()=>s.classList.add("show"),i*50);
+    });
+}
+
+function toggleVer(){
+    version=version==="I"?"II":"I";
+    items=[];
+    applyTitle();
+    refresh();
+}
+
+refresh();
+</script>
+</body>
+</html>
