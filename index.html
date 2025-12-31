@@ -49,14 +49,8 @@ button{
     top:20px;
     z-index:999;
 }
-#logoLeft{
-    left:20px;
-    width:400px;   /* ← 左上再大一點 */
-}
-#logoRight{
-    right:20px;
-    width:240px;   /* ← 右上角明顯放大 */
-}
+#logoLeft{left:20px;width:400px;}
+#logoRight{right:20px;width:240px;}
 
 #loadingText{
     display:none;
@@ -111,7 +105,7 @@ button{
 .slot.show{opacity:1;transform:none;}
 
 @keyframes jump{
-    0%,100%{transform:scale(1);}
+    0%,100{transform:scale(1);}
     50%{transform:scale(1.15);}
 }
 </style>
@@ -137,7 +131,7 @@ button{
 </div>
 
 <script>
-/* ===== 背景掉落 ===== */
+/* ===== 背景掉落（統一版本） ===== */
 const canvas=document.getElementById("bgCanvas");
 const ctx=canvas.getContext("2d");
 let items=[],version="II";
@@ -148,25 +142,48 @@ function resize(){
 }
 resize();onresize=resize;
 
-function renderEmoji(e){
-    let c=document.createElement("canvas");
-    c.width=c.height=80;
-    let x=c.getContext("2d");
-    x.font="64px 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji'";
+/* 金幣 Emoji */
+function renderCoin(){
+    const c=document.createElement("canvas");
+    c.width=c.height=64;
+    const x=c.getContext("2d");
+    x.font="48px 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji'";
     x.textAlign="center";
     x.textBaseline="middle";
-    x.fillText(e,40,40);
+    x.fillText("🪙",32,32);
     return c;
 }
-const coin=renderEmoji("🪙");
-const bill=renderEmoji("💵");
+
+/* 綠色鈔票（自繪，永不變藍） */
+function renderBill(){
+    const c=document.createElement("canvas");
+    c.width=c.height=64;
+    const x=c.getContext("2d");
+
+    x.fillStyle="#1fa85b";
+    x.fillRect(6,18,52,28);
+
+    x.strokeStyle="#b6ffd8";
+    x.lineWidth=2;
+    x.strokeRect(6,18,52,28);
+
+    x.strokeStyle="#eafff3";
+    x.beginPath();
+    x.arc(32,32,7,0,Math.PI*2);
+    x.stroke();
+
+    return c;
+}
+
+const coinImg=renderCoin();
+const billImg=renderBill();
 
 function spawn(){
     items.push({
         x:Math.random()*canvas.width,
         y:-50,
         v:6+Math.random()*4,
-        img:version==="I"?coin:bill
+        img:version==="I"?coinImg:billImg
     });
 }
 
@@ -176,7 +193,7 @@ function draw(){
         ctx.drawImage(i.img,i.x,i.y,40,40);
         i.y+=i.v;
     });
-    items=items.filter(i=>i.y<canvas.height+50);
+    items=items.filter(i=>i.y<canvas.height+60);
     if(Math.random()>0.45)spawn();
     requestAnimationFrame(draw);
 }
@@ -252,7 +269,7 @@ async function refresh(){
     for(let i=0;i<3;i++)rooms.push("top");
     for(let i=0;i<6;i++)rooms.push("high");
     while(rooms.length<27)rooms.push("normal");
-    rooms.sort(()=>Math.random()-0.5);
+    rooms.sort(()=>Math.random()-.5);
 
     rooms.forEach((t,i)=>{
         let s=document.createElement("div");
